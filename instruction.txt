@@ -1,0 +1,45 @@
+0. run screen for seperate terminal
+-- screen : create new terminal
+-- screen -ls : show the info of working terminal
+-- ctrl + a + d (or ctrl + a d) : logout terminal but the terminal is working
+-- screen -r id : login terminal with id
+-- ctrl + d : terminate terminal and exit
+
+1. python import_example.py
+-- need to run it on gpu
+-- download files from https://drive.google.com/drive/folders/15hvzxt_XxuokSmj0uO4xxMTMWVc0cIMU
+
+2. python dataset_tool.py create_cifar10 datasets/cifar10 ~/downloads/cifar10
+-- dataset_tool.py: generate tfrecords and labels files
+-- python dataset_tool.py <function_name> <output_dir> <input_dir>
+-- for <input_dir> of cifar10, need to download 'CIFAR-10 python version' from https://www.cs.toronto.edu/~kriz/cifar.html
+   wget https://www.cs.toronto.edu/~kriz/cifar-10-python.tar.gz
+   tar -zxvf cifar-10-python.tar.gz
+   python dataset_tool.py create_cifar10 datasets/cifar10 cifar-10-batches-py <-- before run it, fix the problem of labels.dtype below
+
+-- there is bug in create_cifar10 in dataset_tool.py
+   assert labels.shape == (50000,) and labels.dtype == np.int32 --> assert labels.shape == (50000,) and labels.dtype == np.int64
+
+
+3. training
+-- deactivate line in config.py
+   #desc += '-celebahq';            dataset = EasyDict(tfrecord_dir='celebahq'); train.mirror_augment = True
+-- activate line in config.py
+	desc += '-cifar10';             dataset = EasyDict(tfrecord_dir='cifar10')
+	** the default directory is datasets **
+	** assume that tfrecords files are under datasets/cifar10/ **
+	** other configuration exists in config.py **
+--  run training
+	python train.py
+-- results are stored under results/000-pgan-cifar10-preset-v2-1gpu-fp32/
+
+4. tensorboard
+	tensorboard --logdir=results
+
+5. video generatation
+-- after training is finished, activate line in config.py and change run_id
+	train = EasyDict(func='util_scripts.generate_interpolation_video', run_id=xx, grid_size=[1,1], duration_sec=60.0, smoothing_sec=1.0); num_gpus = 1; desc = 'interpolation-video-' + str(train.run_id)
+
+	** run_id=xx is the number of results/xx-pgan-cifar10-preset-v2-1gpu-fp32/
+
+
